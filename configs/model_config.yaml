@@ -1,0 +1,23 @@
+model:
+  base_model: "microsoft/Phi-3-mini-4k-instruct"
+  max_seq_length: 2048
+  dtype: "float16"
+  trust_remote_code: true
+
+qlora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - "qkv_proj"
+    - "o_proj"
+    - "gate_up_proj"
+    - "down_proj"
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+quantization:
+  load_in_4bit: true
+  bnb_4bit_compute_dtype: "float16"
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_use_double_quant: true
