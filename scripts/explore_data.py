@@ -9,7 +9,7 @@ from pathlib import Path
 from collections import defaultdict
 import statistics
 
-DATA_PATH = Path("/Users/khushpatel/Desktop/ML Projects/legal-contract-risk-analyzer/data/processed/cuad_25_clauses.json")
+DATA_PATH = Path("data/raw/CUAD_v1.jso")
 MIN_POSITIVE_THRESHOLD = 50  # flag clause types below this
 
 
