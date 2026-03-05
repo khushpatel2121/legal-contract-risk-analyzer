@@ -8,6 +8,7 @@ Run: python3 scripts/build_training_data.py
 import json
 import random
 from pathlib import Path
+import re 
 
 random.seed(42)
 
@@ -28,22 +29,30 @@ SYSTEM_PROMPT = (
     "If not present, state 'NOT PRESENT'."
 )
 
+def clean_text(text: str) -> str:
+    """Normalize whitespace in extracted window."""
+    text = re.sub(r'[^\\x00-\\x7F]+', ' ', text)  # remove non-ASCII
+    text = re.sub(r'\\s+', ' ', text)              # collapse whitespace
+    return text.strip()
+
+
+
 
 # ============================================================
 # SECTION 1 — Context Window Extraction
 # ============================================================
 
 def extract_window(context: str, answer_text: str, is_positive: bool) -> str:
-    """
-    Positive  → extract window centered around answer span
-    Negative  → sample random window from context
-    """
     if not is_positive:
         if len(context) <= WINDOW_SIZE:
             return context
         max_start = len(context) - WINDOW_SIZE
         start = random.randint(0, max_start)
-        return context[start:start + WINDOW_SIZE]
+        # Snap to nearest sentence boundary
+        boundary = context.find('.', start)
+        if boundary != -1 and boundary < start + 200:
+            start = boundary + 1
+        return clean_text(context[start:start + WINDOW_SIZE])
 
     start = context.find(answer_text)
     if start == -1:
@@ -52,7 +61,18 @@ def extract_window(context: str, answer_text: str, is_positive: bool) -> str:
     end          = start + len(answer_text)
     window_start = max(0, start - PADDING)
     window_end   = min(len(context), end + PADDING)
-    return context[window_start:window_end]
+
+    # Snap window_start to nearest sentence boundary
+    boundary = context.find('.', window_start)
+    if boundary != -1 and boundary < start:
+        window_start = boundary + 1
+
+    # Snap window_end to nearest sentence boundary
+    boundary = context.rfind('.', end, window_end)
+    if boundary != -1:
+        window_end = boundary + 1
+
+    return clean_text(context[window_start:window_end])
 
 
 # ============================================================
